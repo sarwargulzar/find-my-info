@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Find My Info — Personal Dashboard</title>
+  <meta name="description" content="A premium, interactive dashboard for exploring local system metrics, network diagnostics, weather, and a secure local vault.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Outfit:wght@100..900&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS for Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  
+  <!-- Project Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- User Authentication Overlay -->
+  <div class="auth-overlay-screen" id="auth-screen">
+    <div class="auth-box glass-card">
+      <div class="auth-header">
+        <svg class="auth-logo" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 21m0 0l-.813-5.096m.813 5.096a18.665 18.665 0 01-10.155-2.927m12.09 2.927a18.66 18.66 0 0010.155-2.927M9 10.13c-.815 0-1.6.324-2.176.902A3.078 3.078 0 006 13.23a3.078 3.078 0 00.824 2.2c.576.577 1.36.901 2.176.901a3.078 3.078 0 002.176-.902 3.078 3.078 0 00.824-2.2 3.078 3.078 0 00-.824-2.201 3.078 3.078 0 00-2.176-.898zm0 0V4m0 0l2 2m-2-2L7 6" />
+        </svg>
+        <h2>FindMyInfo Hub</h2>
+        <p id="auth-subtitle">Verify your identity to decrypt your local dashboard.</p>
+      </div>
+      
+      <!-- Login Mode -->
+      <form id="auth-login-form">
+        <div class="form-group">
+          <label for="login-password">Enter Master Password</label>
+          <input type="password" id="login-password" placeholder="••••••••" required autocomplete="off">
+        </div>
+        <button type="submit" class="primary-btn auth-submit-btn">Unlock Dashboard</button>
+      </form>
+
+      <!-- Registration Mode (Only shown on 1st boot) -->
+      <form id="auth-register-form" class="hidden">
+        <div class="form-group">
+          <label for="register-username">Set Master Username</label>
+          <input type="text" id="register-username" placeholder="e.g. Sarwar" required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label for="register-password">Set Master Password</label>
+          <input type="password" id="register-password" placeholder="••••••••" required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label for="register-confirm">Confirm Password</label>
+          <input type="password" id="register-confirm" placeholder="••••••••" required autocomplete="off">
+        </div>
+        <button type="submit" class="primary-btn auth-submit-btn">Create Secure Profile</button>
+      </form>
+      
+      <div class="auth-footer-text">
+        Secure Local Storage Sandbox. Your credentials are never uploaded.
+      </div>
+    </div>
+  </div>
+
+  <div class="app-container">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <svg class="brand-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 21m0 0l-.813-5.096m.813 5.096a18.665 18.665 0 01-10.155-2.927m12.09 2.927a18.66 18.66 0 0010.155-2.927M9 10.13c-.815 0-1.6.324-2.176.902A3.078 3.078 0 006 13.23a3.078 3.078 0 00.824 2.2c.576.577 1.36.901 2.176.901a3.078 3.078 0 002.176-.902 3.078 3.078 0 00.824-2.2 3.078 3.078 0 00-.824-2.201 3.078 3.078 0 00-2.176-.898zm0 0V4m0 0l2 2m-2-2L7 6" />
+        </svg>
+        <span class="brand-text">FindMyInfo</span>
+      </div>
+      
+      <nav class="sidebar-menu">
+        <button class="nav-item active" data-tab="dashboard" id="nav-dashboard">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="9" rx="1" />
+            <rect x="14" y="3" width="7" height="5" rx="1" />
+            <rect x="14" y="12" width="7" height="9" rx="1" />
+            <rect x="3" y="16" width="7" height="5" rx="1" />
+          </svg>
+          <span>Dashboard</span>
+        </button>
+        
+        <button class="nav-item" data-tab="network" id="nav-network">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.905 0-5.62-.73-8.002-2.014m16.004 0A12.013 12.013 0 0012 18c-2.905 0-5.62-.73-8.002-2.014" />
+          </svg>
+          <span>Network & Location</span>
+        </button>
+        
+        <button class="nav-item" data-tab="system" id="nav-system">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+          </svg>
+          <span>System Specs</span>
+        </button>
+        
+        <button class="nav-item" data-tab="vault" id="nav-vault">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          <span>Saved Vault</span>
+        </button>
+      </nav>
+      
+      <!-- User Profile Widget in sidebar -->
+      <div class="sidebar-user hidden" id="sidebar-user-panel">
+        <div class="user-avatar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+        </div>
+        <div class="user-info">
+          <span class="username-display" id="user-display-name">Username</span>
+          <span class="user-role">Master Profile</span>
+        </div>
+        <button class="logout-btn" id="logout-trigger" title="Log Out">
+          <svg class="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Footer/Info panel in sidebar -->
+      <div class="sidebar-footer">
+        <div class="shortcut-tip">
+          <span class="key-badge">Ctrl</span> + <span class="key-badge">K</span>
+          <span class="tip-text">Spotlight search</span>
+        </div>
+        <div class="creator-stamp">100% Free & Local</div>
+      </div>
+    </aside>
+    
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- Top header bar -->
+      <header class="top-header">
+        <div class="search-trigger-container">
+          <button id="spotlight-trigger" class="spotlight-btn">
+            <svg class="btn-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+            </svg>
+            <span>Search anything...</span>
+            <span class="shortcut-indicator">Ctrl K</span>
+          </button>
+        </div>
+        
+        <!-- Live status / clock -->
+        <div class="header-status">
+          <div class="pulse-indicator online" id="status-pulse"></div>
+          <span id="connection-status-text">Checking connection...</span>
+          <span class="divider">|</span>
+          <div class="clock-display">
+            <span id="live-time">00:00:00</span>
+          </div>
+        </div>
+      </header>
+      
+      <!-- Dashboard Tab Views Container -->
+      <div class="tab-views">
+        
+        <!-- 1. DASHBOARD VIEW -->
+        <section id="tab-dashboard" class="tab-pane active">
+          <div class="welcome-banner">
+            <div class="welcome-text">
+              <h1>Welcome to FindMyInfo</h1>
+              <p>Your local system analytics and configuration dashboard, operating fully client-side.</p>
+            </div>
+            <div class="quick-status-pills">
+              <span class="status-pill" id="pill-ip">IP: Loading...</span>
+              <span class="status-pill" id="pill-os">OS: Loading...</span>
+            </div>
+          </div>
+          
+          <div class="dashboard-grid">
+            
+            <!-- Quick Network Summary -->
+            <div class="glass-card clickable-card" onclick="document.getElementById('nav-network').click()">
+              <div class="card-header">
+                <h3>Network Info</h3>
+                <svg class="header-icon cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 12.55a11 11 0 0 1 14.08 0" /><path d="M1.42 9a16 16 0 0 1 21.16 0" /><path d="M8.53 16.11a6 6 0 0 1 6.95 0" /><line x1="12" y1="20" x2="12.01" y2="20" stroke-width="3" />
+                </svg>
+              </div>
+              <div class="card-body">
+                <div class="metric-row">
+                  <span class="metric-label">Public IP</span>
+                  <span class="metric-value code-font" id="dash-ip">Fetching...</span>
+                </div>
+                <div class="metric-row">
+                  <span class="metric-label">ISP Provider</span>
+                  <span class="metric-value" id="dash-isp">Fetching...</span>
+                </div>
+                <div class="metric-row">
+                  <span class="metric-label">Approx. Location</span>
+                  <span class="metric-value" id="dash-location">Fetching...</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Quick System Specs -->
+            <div class="glass-card clickable-card" onclick="document.getElementById('nav-system').click()">
+              <div class="card-header">
+                <h3>System Status</h3>
+                <svg class="header-icon purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="9" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+              </div>
+              <div class="card-body">
+                <div class="metric-row">
+                  <span class="metric-label">Browser Engine</span>
+                  <span class="metric-value" id="dash-browser">Detecting...</span>
+                </div>
+                <div class="metric-row">
+                  <span class="metric-label">CPU Threads</span>
+                  <span class="metric-value" id="dash-cpu">Detecting...</span>
+                </div>
+                <div class="metric-row">
+                  <span class="metric-label">Battery Level</span>
+                  <span class="metric-value" id="dash-battery">Detecting...</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Weather / Environment -->
+            <div class="glass-card">
+              <div class="card-header">
+                <h3>Environment</h3>
+                <svg class="header-icon yellow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" /><circle cx="12" cy="12" r="4" />
+                </svg>
+              </div>
+              <div class="card-body">
+                <div class="weather-summary">
+                  <div class="weather-temp" id="dash-temp">--°C</div>
+                  <div class="weather-desc" id="dash-weather-desc">Fetching weather forecast...</div>
+                </div>
+                <div class="metric-row">
+                  <span class="metric-label">Wind Speed</span>
+                  <span class="metric-value" id="dash-wind">-- km/h</span>
+                </div>
+                <div class="metric-row">
+                  <span class="metric-label">Timezone</span>
+                  <span class="metric-value code-font" id="dash-timezone">Detecting...</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Saved Notes Vault Summary -->
+            <div class="glass-card clickable-card" onclick="document.getElementById('nav-vault').click()">
+              <div class="card-header">
+                <h3>Saved Vault</h3>
+                <svg class="header-icon pink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" />
+                </svg>
+              </div>
+              <div class="card-body">
+                <div class="vault-summary-count">
+                  <span class="large-count" id="dash-vault-count">0</span>
+                  <span class="count-label">saved items in local vault</span>
+                </div>
+                <p class="card-tip">Press Ctrl+K at any time to query notes and details instantly.</p>
+              </div>
+            </div>
+            
+          </div>
+          
+          <!-- Modern Informational Panel -->
+          <div class="glass-card wide-card info-hero">
+            <div class="hero-content">
+              <h3>Did you know?</h3>
+              <p id="system-fact">Browsers can access many details directly. By leveraging secure JavaScript APIs, we retrieve technical indicators and display them in this beautiful glassmorphism dashboard.</p>
+              <button class="secondary-btn" id="next-fact-btn">Next Tip</button>
+            </div>
+          </div>
+        </section>
+        
+        <!-- 2. NETWORK & LOCATION VIEW -->
+        <section id="tab-network" class="tab-pane">
+          <div class="section-title">
+            <h2>Network Geolocation & Diagnostics</h2>
+            <p>View your public internet indicators and route. Approximate coordinates are plotted on the live map.</p>
+          </div>
+          
+          <div class="tab-layout-grid map-grid-layout">
+            <div class="glass-card flex-column">
+              <h3>Network Metadata</h3>
+              <div class="details-list">
+                <div class="details-item">
+                  <span class="label">IP Address</span>
+                  <span class="val code-font copyable" id="net-ip" title="Click to copy">Loading...</span>
+                </div>
+                <div class="details-item">
+                  <span class="label">ISP Provider</span>
+                  <span class="val" id="net-isp">Loading...</span>
+                </div>
+                <div class="details-item">
+                  <span class="label">Organization</span>
+                  <span class="val" id="net-org">Loading...</span>
+                </div>
+                <div class="details-item">
+                  <span class="label">Country / Region</span>
+                  <span class="val" id="net-country">Loading...</span>
+                </div>
+                <div class="details-item">
+                  <span class="label">City / ZIP</span>
+                  <span class="val" id="net-city">Loading...</span>
+                </div>
+                <div class="details-item">
+                  <span class="label">Latitude & Longitude</span>
+                  <span class="val code-font" id="net-coords">Loading...</span>
+                </div>
+                <div class="details-item">
+                  <span class="label">Approx. Connection Speed</span>
+                  <span class="val" id="net-speed">Testing...</span>
+                </div>
+              </div>
+              <button class="primary-btn speed-test-btn" id="run-speed-test">Test Connection Speed</button>
+            </div>
+            
+            <!-- Map Container -->
+            <div class="glass-card map-card">
+              <div id="leaflet-map" class="map-view"></div>
+            </div>
+          </div>
+        </section>
+        
+        <!-- 3. SYSTEM DIAGNOSTICS VIEW -->
+        <section id="tab-system" class="tab-pane">
+          <div class="section-title">
+            <h2>System Diagnostics & Hardware</h2>
+            <p>Detailed evaluation of your screen, hardware cores, browser engine variables, and battery configuration.</p>
+          </div>
+          
+          <div class="dashboard-grid grid-3-cols">
+            <!-- Hardware Specs -->
+            <div class="glass-card">
+              <h3>Hardware Cores & Specs</h3>
+              <div class="details-list">
+                <div class="details-item">
+                  <span class="label">Logical CPU Cores</span>
+                  <span class="val code-font" id="sys-cpu-cores">Loading...</span>
+                </div>
+                <div class="details-item">
+                  <span class="label">Estimated RAM (GB)</span>
+                  <span class="val code-font" id="sys-ram">Loading...</span>
+                </div>
+                <div class="details-item">
+                  <span class="label">OS Platform</span>
+                  <span class="val" id="sys-platform">Loading...</span>
+                </div>
+                <div class="details-item">
+                  <span class="label">Primary Language</span>
+                  <span class="val" id="sys-lang">Loading...</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Display details -->
+            <div class="glass-card">
+              <h3>Display & Screen</h3>
+              <div class="details-list">
+                <div class="details-item">
+                  <span class="label">Screen Resolution</span>
+                  <span class="val code-font" id="sys-resolution">Loading...</span>
+                </div>
+                <div class="details-item">
+                  <span class="label">Available Workspace</span>
+                  <span class="val code-font" id="sys-avail-screen">Loading...</span>
+                </div>
+                <div class="details-item">
+                  <span class="label">Color Depth (bits)</span>
+                  <span class="val code-font" id="sys-color-depth">Loading...</span>
+                </div>
+                <div class="details-item">
+                  <span class="label">Device Pixel Ratio</span>
+                  <span class="val code-font" id="sys-pixel-ratio">Loading...</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Battery Status -->
+            <div class="glass-card">
+              <h3>Battery Diagnostics</h3>
+              <div class="battery-diagnostic-container">
+                <div class="battery-meter-wrapper">
+                  <div class="battery-body">
+                    <div class="battery-level" id="battery-indicator" style="width: 0%;"></div>
+                    <div class="battery-charging-indicator" id="battery-charging-bolt">⚡</div>
+                  </div>
+                  <div class="battery-tip"></div>
+                </div>
+                <div class="details-list no-margin">
+                  <div class="details-item">
+                    <span class="label">Charge Percentage</span>
+                    <span class="val code-font" id="sys-battery-pct">Loading...</span>
+                  </div>
+                  <div class="details-item">
+                    <span class="label">Power Connection</span>
+                    <span class="val" id="sys-battery-status">Loading...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- User Agent Block -->
+          <div class="glass-card wide-card user-agent-card">
+            <h3>Detailed User Agent String</h3>
+            <div class="user-agent-wrapper code-font" id="sys-user-agent">
+              Detecting...
+            </div>
+          </div>
+        </section>
+        
+        <!-- 4. SECURE VAULT & SAVED INFO -->
+        <section id="tab-vault" class="tab-pane">
+          <div class="section-title">
+            <h2>Local Info Vault</h2>
+            <p>Save notes, assignments, documents, quick links, or snippets locally. All records are stored entirely in your local browser storage.</p>
+          </div>
+          
+          <div class="vault-container">
+            <!-- Left Panel: Form to Add Note -->
+            <div class="glass-card vault-form-card">
+              <h3 id="vault-form-title">Save New Record</h3>
+              <form id="vault-form">
+                <input type="hidden" id="vault-id">
+                
+                <div class="form-group">
+                  <label for="vault-title">Title / Name</label>
+                  <input type="text" id="vault-title" placeholder="e.g., Physics Assignment Deadline" required autocomplete="off">
+                </div>
+                
+                <div class="form-group">
+                  <label for="vault-category">Category</label>
+                  <select id="vault-category">
+                    <option value="General">General</option>
+                    <option value="Personal">Personal</option>
+                    <option value="Academic">Academic</option>
+                    <option value="Quick Link">Quick Link</option>
+                    <option value="Credentials">Credentials (Encrypted)</option>
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label for="vault-content">Content / Value</label>
+                  <textarea id="vault-content" placeholder="Type info here... (e.g. key credentials, details, links)" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                  <label for="vault-tags">Tags (comma-separated)</label>
+                  <input type="text" id="vault-tags" placeholder="e.g. physics, homework, pdf" autocomplete="off">
+                </div>
+                
+                <div class="form-actions">
+                  <button type="submit" class="primary-btn" id="vault-save-btn">Save Info</button>
+                  <button type="button" class="secondary-btn hidden" id="vault-cancel-btn">Cancel Edit</button>
+                </div>
+              </form>
+            </div>
+            
+            <!-- Right Panel: Saved Notes List -->
+            <div class="glass-card vault-list-card flex-column">
+              <div class="vault-list-header">
+                <h3>Saved Records</h3>
+                <div class="vault-filter">
+                  <input type="text" id="vault-list-search" placeholder="Filter records..." autocomplete="off">
+                </div>
+              </div>
+              
+              <div class="vault-items-container" id="vault-items-list">
+                <!-- Items populated by JS -->
+                <div class="empty-state">
+                  <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M20 13V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7" /><path d="M12 11H8" /><path d="M10 15H8" /><circle cx="18" cy="18" r="4" /><path d="M18 16v4" /><path d="M16 18h4" />
+                  </svg>
+                  <p>Your local vault is currently empty. Save something above to get started!</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+      </div>
+    </main>
+    
+  </div>
+  
+  <!-- Spotlight Universal Search Overlay -->
+  <div class="spotlight-overlay" id="spotlight-overlay">
+    <div class="spotlight-modal">
+      <div class="spotlight-search-header">
+        <svg class="search-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+        </svg>
+        <input type="text" id="spotlight-input" placeholder="Type what info you want to find..." autocomplete="off">
+        <span class="spotlight-close-hint">ESC</span>
+      </div>
+      
+      <div class="spotlight-results" id="spotlight-results">
+        <!-- Results dynamically populated -->
+        <div class="spotlight-instruction">
+          <p>Search diagnostic properties (e.g., <code>IP</code>, <code>Cores</code>, <code>Screen</code>) or search your local secure vault.</p>
+        </div>
+      </div>
+      
+      <div class="spotlight-footer">
+        <div class="footer-tip">
+          <span class="badge">↑↓</span> Navigate
+          <span class="badge">Enter</span> Select
+          <span class="badge">Esc</span> Close
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Leaflet Map Script -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Application Core Script -->
+  <script src="app.js"></script>
+</body>
+</html>
